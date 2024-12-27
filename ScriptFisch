@@ -1,0 +1,154 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Bolbo Hub | Fisch",
+   LoadingTitle = "Fisch",
+   LoadingSubtitle = "Loading Bolbo Hub",
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil,
+      FileName = "Bolbo Hub"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+   KeySystem = true,
+   KeySettings = {
+      Title = "Key | Bolbo Hub",
+      Subtitle = "Key System",
+      Note = "Key In Discord Server",
+      FileName = "BolboHubKey",
+      SaveKey = true,
+      GrabKeyFromSite = true,
+      Key = {"https://pastebin.com/raw/DJiY26CD"}
+   }
+})
+
+local MainTab = Window:CreateTab("Teleport", nil)
+local MainSection = TeleportTab:CreateSection("Farm")
+
+local Toggle = MainTab:CreateToggle({
+   Name = "Auto Farm",
+   CurrentValue = false,
+   Flag = "autofarm",
+   Callback = function(Value)
+       if Value then
+           AutoFarmEnabled = true
+           StartAutoFarm()
+       else
+           AutoFarmEnabled = false
+       end
+   end,
+})
+
+local function EquipRod()
+    local args = {
+        [1] = game:GetService("Players").LocalPlayer.Backpack:FindFirstChild("Flimsy Rod")
+    }
+    game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.backpack.events.equip:FireServer(unpack(args))
+end
+
+local function CastRod()
+    local args = {
+        [1] = 100,
+        [2] = 1
+    }
+    game:GetService("Players").LocalPlayer.Character:FindFirstChild("Flimsy Rod").events.cast:FireServer(unpack(args))
+end
+
+local function ReelFinished()
+    local args = {
+        [1] = 100,
+        [2] = true
+    }
+    game:GetService("ReplicatedStorage").events.reelfinished:FireServer(unpack(args))
+end
+
+local function InteractShake()
+    game:GetService("Players").LocalPlayer.PlayerGui.uiNavigation:FireServer(true) -- Włącz nawigację UI
+    wait(0.1)
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, "S", false, nil) -- Kliknij S
+    wait(0.1)
+    game:GetService("VirtualInputManager"):SendKeyEvent(false, "S", false, nil) -- Zwolnij S
+    wait(0.1)
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, "Return", false, nil) -- Kliknij Enter
+    wait(0.1)
+    game:GetService("VirtualInputManager"):SendKeyEvent(false, "Return", false, nil) -- Zwolnij Enter
+end
+
+local function StartAutoFarm()
+    spawn(function()
+        while AutoFarmEnabled do
+            -- Wyciągnij wędkę, jeśli nie jest wyposażona
+            local character = game:GetService("Players").LocalPlayer.Character
+            if not character:FindFirstChild("Flimsy Rod") then
+                EquipRod()
+                wait(1)
+            end
+
+            -- Rzuć wędkę
+            if character:FindFirstChild("Flimsy Rod") then
+                CastRod()
+                wait(1) -- Czekaj na animację rzucania
+            end
+
+            -- Sprawdź interakcje z UI
+            local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
+            if playerGui.shakeui and playerGui.shakeui.safezone and playerGui.shakeui.safezone.button then
+                InteractShake()
+                wait(0.5)
+            elseif playerGui:FindFirstChild("reel") then
+                -- Obsłuż zakończenie łowienia
+                wait(1)
+                ReelFinished()
+                wait(1)
+            else
+                wait(0.1) -- Brak interakcji, krótkie opóźnienie
+            end
+        end
+    end)
+end
+
+
+local TeleportTab = Window:CreateTab("Teleport", nil)
+local TeleportSection = TeleportTab:CreateSection("Islands")
+
+-- Mapa wysp i ich współrzędnych
+local IslandCoordinates = {
+   Moosewood = Vector3.new(384.207, 132.57, 258.353),
+   Sunstone = Vector3.new(-923.61, 132.095, -1121.82),
+   Roslitbay = Vector3.new(-1750.26, 143.982, 686.295),
+   ["Statue Of Sovereignty"] = Vector3.new(21.8949, 157.003, -1036.97),
+}
+
+local selectedIsland = "Moosewood" -- Domyślna wyspa
+
+local DropdownIslands = TeleportTab:CreateDropdown({
+   Name = "Select Area",
+   Options = {"Moosewood", "Sunstone", "Roslitbay", "Statue Of Sovereignty"},
+   CurrentOption = "Moosewood",
+   MultipleOptions = false,
+   Flag = "dropdownislands",
+   Callback = function(Option)
+        selectedIsland = Option -- Zapisz wybraną wyspę
+   end,
+})
+
+local TPButton = TeleportTab:CreateButton({
+   Name = "Teleport to island",
+   Callback = function()
+        local player = game.Players.LocalPlayer
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local destination = IslandCoordinates[selectedIsland]
+            if destination then
+                player.Character.HumanoidRootPart.CFrame = CFrame.new(destination)
+            else
+                warn("Coordinates for selected island not found!")
+            end
+        else
+            warn("Player or HumanoidRootPart not found!")
+        end
+   end,
+})
