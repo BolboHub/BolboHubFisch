@@ -27,7 +27,7 @@ local Window = Rayfield:CreateWindow({
 })
 
 local MainTab = Window:CreateTab("Teleport", nil)
-local MainSection = TeleportTab:CreateSection("Farm")
+local MainSection = MainTab:CreateSection("Farm")
 
 local Toggle = MainTab:CreateToggle({
    Name = "Auto Farm",
